@@ -1,12 +1,6 @@
 def create_security_scanner():
-    """
-    Creates and returns a complete security scanner application that can be imported and run
-    from another file. Simply call this function to get the app running.
+    """ Security scanner application that can be imported and run from another file. """
 
-    Usage:
-        from your_module import create_security_scanner
-        create_security_scanner()
-    """
     import tkinter as tk
     from tkinter import ttk
     import openai
@@ -20,7 +14,7 @@ def create_security_scanner():
     class SecurityScannerApp:
         def __init__(self, root, is_toplevel=False):
             self.root = root
-            self.root.title("Security Scanner")
+            self.root.title("SMART-Diagnose")
             self.root.geometry("600x400")
 
             # Store whether this is a toplevel window
@@ -41,7 +35,7 @@ def create_security_scanner():
             self._thread_error = None
             self._thread_status = None
 
-            # API Key - replace with your own
+            # AI API Key
             self.API_KEY = "brq0ubGwszOijmVjMlmTM5n07jU7CMbD"
 
             # Configure main window
@@ -52,7 +46,7 @@ def create_security_scanner():
             root.grid_rowconfigure(0, weight=1)
 
             # Create title
-            title_label = ttk.Label(self.main_frame, text="Security Scanner",
+            title_label = ttk.Label(self.main_frame, text="SMART Security Scanner",
                                     font=('Arial', 16, 'bold'))
             title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
 
@@ -67,7 +61,7 @@ def create_security_scanner():
             self.status_label.grid(row=1, column=1, sticky=tk.W, pady=10)
 
             # Create explanation text
-            explanation = "This tool performs a basic security scan of your system and provides AI-powered recommendations to improve your security posture."
+            explanation = "This tool performs a security scan of your system and provides SMART powered recommendations to improve your security posture."
             explanation_label = ttk.Label(self.main_frame, text=explanation, wraplength=560)
             explanation_label.grid(row=2, column=0, columnspan=2, pady=10)
 
@@ -90,7 +84,7 @@ def create_security_scanner():
         def run_scan(self):
             """Runs the security scan in a separate thread"""
             self.scan_button.config(state="disabled")
-            self.status_var.set("Running security scan...")
+            self.status_var.set("Running SMART security scan...")
 
             # Reset thread state variables
             self._thread_completed = False
@@ -135,7 +129,7 @@ def create_security_scanner():
                 scan_results = self.scan_security(comprehensive=(scan_type == "comprehensive"))
 
                 # Update UI from the main thread - using a thread-safe approach
-                self._thread_status = "Getting AI security recommendations..."
+                self._thread_status = "Getting SMART security recommendations..."
 
                 # Get AI recommendations
                 ai_response = self.get_ai_recommendations(scan_results)
@@ -155,12 +149,6 @@ def create_security_scanner():
         def scan_security(self, comprehensive=False):
             """
             Perform a security scan of the system.
-
-            Args:
-                comprehensive (bool): Whether to perform a comprehensive scan
-
-            Returns:
-                dict: Security check results
             """
             try:
                 # Collect basic system info
@@ -177,8 +165,6 @@ def create_security_scanner():
                     self._check_macos_security(results, comprehensive)
                 elif system == "Windows":
                     self._check_windows_security(results, comprehensive)
-                elif system == "Linux":
-                    self._check_linux_security(results, comprehensive)
 
                 return results
 
@@ -270,7 +256,6 @@ def create_security_scanner():
                         "fix": "Check for updates in System Preferences > Software Update"
                     })
             except:
-                # Don't add an issue if we can't check for updates
                 pass
 
             # Additional comprehensive checks
@@ -341,41 +326,11 @@ def create_security_scanner():
             except:
                 results["antivirus_enabled"] = "unknown"
 
-        def _check_linux_security(self, results, comprehensive=False):
-            """Simple Linux security checks"""
-            # Basic checks
-            results["issues"].append({
-                "type": "platform",
-                "issue": "Linux security scan is limited in this version",
-                "fix": "Consider using a tool like Lynis for a comprehensive scan"
-            })
 
-            # Try to check firewall status
-            try:
-                cmd = "sudo ufw status"
-                fw_output = subprocess.check_output(cmd, shell=True).decode('utf-8').strip()
-                fw_enabled = "active" in fw_output.lower()
-
-                results["firewall_enabled"] = fw_enabled
-
-                if not fw_enabled:
-                    results["issues"].append({
-                        "type": "firewall",
-                        "issue": "UFW firewall is not enabled",
-                        "fix": "Enable UFW firewall with: sudo ufw enable"
-                    })
-            except:
-                results["firewall_enabled"] = "unknown"
 
         def get_ai_recommendations(self, scan_results):
             """
             Get AI-powered security recommendations.
-
-            Args:
-                scan_results (dict): Results from scan_security()
-
-            Returns:
-                str: AI-generated security recommendations
             """
             try:
                 # Format issues for the prompt
@@ -388,7 +343,7 @@ def create_security_scanner():
 
                 # Create the prompt
                 prompt = f"""
-                I need security recommendations for my computer. Here's my system information:
+                Give me security recommendations for my computer. Sound like AI custom agent. Here's my system information:
 
                 Operating System: {scan_results['system']} {scan_results['os_version']}
                 Hostname: {scan_results['hostname']}
@@ -444,7 +399,7 @@ def create_security_scanner():
             self.scan_window.title("Security Scan Results")
             self.scan_window.geometry("1024x900")
 
-            # Create main frame with increased padding
+            # Create main frame
             main_frame = ttk.Frame(self.scan_window, padding="30")
             main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
@@ -453,8 +408,8 @@ def create_security_scanner():
             self.scan_window.grid_rowconfigure(0, weight=1)
             main_frame.grid_columnconfigure(0, weight=1)
 
-            # Create widgets with larger fonts and sizes
-            info_label = ttk.Label(main_frame, text="System Security Scan", font=('Arial', 20, 'bold'))
+            # Create widgets
+            info_label = ttk.Label(main_frame, text="SMART Security Scan", font=('Arial', 20, 'bold'))
             info_label.grid(row=0, column=0, pady=(0, 20))
 
             # Get formatted scan results for display
@@ -466,7 +421,7 @@ def create_security_scanner():
             system_info.insert(tk.END, scan_text)
             system_info.config(state="disabled")
 
-            analysis_label = ttk.Label(main_frame, text="AI Security Recommendations", font=('Arial', 20, 'bold'))
+            analysis_label = ttk.Label(main_frame, text="SMART Security Recommendations", font=('Arial', 20, 'bold'))
             analysis_label.grid(row=2, column=0, pady=(0, 15))
 
             ai_analysis = tk.Text(main_frame, height=20, width=100, font=('Arial', 16))
@@ -594,23 +549,6 @@ def create_security_scanner():
                 # Handle any exceptions during speech stopping
                 pass
 
-        def export_report(self, scan_text, recommendations):
-            """Export the security report to a text file"""
-            try:
-                desktop = os.path.join(os.path.expanduser("~"), "Desktop")
-                file_path = os.path.join(desktop, "security_scan_report.txt")
-
-                with open(file_path, "w") as f:
-                    f.write("SECURITY SCAN REPORT\n")
-                    f.write("====================\n\n")
-                    f.write(scan_text)
-                    f.write("\n\nAI SECURITY RECOMMENDATIONS\n")
-                    f.write("===========================\n\n")
-                    f.write(recommendations)
-
-                self.status_var.set(f"Report exported to {file_path}")
-            except Exception as e:
-                self.status_var.set(f"Error exporting report: {str(e)}")
 
         def return_to_main_menu(self):
             """Close the scan window and return to main menu"""

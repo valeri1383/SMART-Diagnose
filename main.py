@@ -1,27 +1,50 @@
+def check_install_libraries():
+    """Check if required libraries are installed and install missing ones."""
+    import importlib
+    import subprocess
+    import sys
+
+
+    # List of required packages
+    required_libs = ["matplotlib", "pandas", "firebase_admin", "psutil", "pyttsx3", "requests", "openai"]
+
+    for lib in required_libs:
+        try:
+            importlib.import_module(lib)
+            print(f"✓ {lib} is installed")
+        except ImportError:
+            print(f"Installing {lib}...")
+            subprocess.check_call([sys.executable, "-m", "pip", "install", lib])
+            print(f"✓ {lib} installed successfully")
+
+# Call the function before any imports
+check_install_libraries()
+
+
 import tkinter as tk
 from tkinter import ttk
-import MacOS_Software_AI_Scan, MacOS_Hardware_AI_Scan, Chat_with_AI_agent, AI_optimiser, AI_security_scanner, \
-    AI_software_recommender, Dashboard_Overview
+import Software_AI_Scan, MacOS_Hardware_AI_Scan, Chat_with_AI_agent, AI_optimiser, AI_security_scanner, \
+    AI_software_recommender, Dashboard_Overview, Windows_Hardware_AI_Scan
 
 
 class TestingApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("AI System Tools")
-        self.root.geometry("1050x990")  # Adjusted window size for medium buttons
+        self.root.title("SMART-Diagnose")
+        self.root.geometry("950x880")
 
         # Initialize StringVar for OS selection first
         self.os_var = tk.StringVar(value="MacOS")  # Set default value
 
-        # Define default button titles - moved Chat to second-to-last position and added icon to App Recommender
+        # Define default button titles
         self.windows_titles = ["1. 🤖 AI Hardware Scanning",
                                "2. 🤖 AI Software Scanning",
                                "3. 🔍 AI Optimiser",
-                               "4. ⚡ Software Scanning",
+                               "4. ⚡ AI Security Scanner",
                                "5. 📱 AI Application Recommender",
                                "6. 💬 Chat with AI Consultant",
-                               "7. 📊 Custom Functionality",
-                               "8. 🚪 Exit"]  # Changed to 8
+                               "7. 📊 Dashboard Visualisation",
+                               "8. 🚪 Exit"]
         self.macos_titles = ["1. 🤖 AI Hardware Scanning",
                              "2. 🤖 AI Software Scanning",
                              "3. 🔍 AI Optimiser",
@@ -29,32 +52,32 @@ class TestingApp:
                              "5. 📱 AI Application Recommender",
                              "6. 💬 Chat with AI Consultant",
                              "7. 📊 Dashboard Visualisation",
-                             "8. 🚪 Exit"]  # Changed to 8
+                             "8. 🚪 Exit"]
 
-        # Create a custom style for the buttons with enhanced appearance
+        # Create a custom style for the buttons
         self.style = ttk.Style()
         self.style.configure('Responsive.TButton',
-                             padding=(25, 10),  # Medium padding for buttons
-                             font=('Arial', 28, 'bold'),  # Medium font
-                             borderwidth=3,  # Keep border thickness
-                             width=32,  # Medium width
-                             height=2.5)  # Medium height
+                             padding=(20, 9),
+                             font=('Arial', 22, 'bold'),
+                             borderwidth=2,
+                             width=30,
+                             height=2.3)
 
-        # Enhanced button states with more vibrant colors and effects
+        # Button states styling
         self.style.map('Responsive.TButton',
-                       foreground=[('pressed', '#FF4444'),  # Bright red when pressed
-                                   ('active', '#2196F3'),  # Material blue on hover
-                                   ('!disabled', '#333333')],  # Dark gray by default
-                       background=[('pressed', '#E0E0E0'),  # Light gray when pressed
-                                   ('active', '#F5F5F5'),  # Slightly lighter on hover
-                                   ('!disabled', '#FFFFFF')],  # White by default
+                       foreground=[('pressed', '#FF4444'),
+                                   ('active', '#2196F3'),
+                                   ('!disabled', '#333333')],
+                       background=[('pressed', '#E0E0E0'),
+                                   ('active', '#F5F5F5'),
+                                   ('!disabled', '#FFFFFF')],
                        relief=[('pressed', 'sunken'),
                                ('!pressed', 'raised')],
-                       borderwidth=[('pressed', 4),  # Border animation
-                                    ('!pressed', 3)])
+                       borderwidth=[('pressed', 3),
+                                    ('!pressed', 2)])
 
-        # Create and configure main frame with padding
-        self.main_frame = ttk.Frame(self.root, padding="20")  # Increased padding
+        # Create and configure main frame
+        self.main_frame = ttk.Frame(self.root, padding="15")
         self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
         # Configure column and row weights for centering
@@ -64,46 +87,46 @@ class TestingApp:
 
         # Create a header frame for title and OS selection
         self.header_frame = ttk.Frame(self.main_frame)
-        self.header_frame.grid(row=0, column=0, pady=10)
+        self.header_frame.grid(row=0, column=0, pady=8)
 
-        # Add title
+        # Add title with smaller font
         self.title_label = ttk.Label(self.header_frame,
-                                     text="AI System Tools",
-                                     font=('Arial', 32, 'bold'))  # Larger title
-        self.title_label.grid(row=0, column=0, pady=10)
+                                     text="SMART-Diagnose",
+                                     font=('Arial', 28, 'bold'))
+        self.title_label.grid(row=0, column=0, pady=8)
 
-        # Enhanced OS selection label
+        # Reduced OS selection label
         self.os_label = ttk.Label(self.header_frame,
                                   text="Select Operating System:",
-                                  font=('Arial', 20, 'bold'))  # Larger font
-        self.os_label.grid(row=1, column=0, pady=10)
+                                  font=('Arial', 18, 'bold'))
+        self.os_label.grid(row=1, column=0, pady=8)
 
-        # Enhanced dropdown style
+        # Dropdown style
         self.style.configure('TCombobox',
-                             padding=10,
-                             font=('Arial', 12))
+                             padding=8,
+                             font=('Arial', 10))
 
         self.os_dropdown = ttk.Combobox(self.header_frame,
                                         textvariable=self.os_var,
                                         values=["MacOS", "Windows"],
                                         state="readonly",
-                                        font=('Arial', 18),  # Larger font
-                                        width=20)
-        self.os_dropdown.grid(row=2, column=0, pady=15)
+                                        font=('Arial', 16),
+                                        width=18)
+        self.os_dropdown.grid(row=2, column=0, pady=10)
         self.os_dropdown.bind('<<ComboboxSelected>>', self.on_os_select)
 
         # Create a divider for visual separation
         self.divider = ttk.Separator(self.main_frame, orient='horizontal')
-        self.divider.grid(row=1, column=0, sticky="ew", pady=20)
+        self.divider.grid(row=1, column=0, sticky="ew", pady=15)
 
-        # Frame for buttons with increased padding for larger menu
-        self.button_frame = ttk.Frame(self.main_frame, padding="10")
-        self.button_frame.grid(row=2, column=0, pady=15)
+        # Frame for buttons
+        self.button_frame = ttk.Frame(self.main_frame, padding="8")
+        self.button_frame.grid(row=2, column=0, pady=10)
         self.button_frame.grid_columnconfigure(0, weight=1)
 
-        # Add a container frame to center-align buttons with a more prominent border
-        self.button_container = ttk.Frame(self.button_frame, relief="groove", borderwidth=3)
-        self.button_container.grid(row=0, column=0, padx=20)
+        # Button container
+        self.button_container = ttk.Frame(self.button_frame, relief="groove", borderwidth=2)
+        self.button_container.grid(row=0, column=0, padx=15)
         self.button_container.grid_columnconfigure(0, weight=1)
 
         # Store buttons in a list for easy access
@@ -123,24 +146,9 @@ class TestingApp:
         self.root.bind('<Down>', lambda event: self.change_focus(1))
 
         # Bind number keys 1-8 for direct selection
-        self.root.bind('1', lambda event: self.button_click(0))
-        self.root.bind('2', lambda event: self.button_click(1))
-        self.root.bind('3', lambda event: self.button_click(2))
-        self.root.bind('4', lambda event: self.button_click(3))
-        self.root.bind('5', lambda event: self.button_click(4))
-        self.root.bind('6', lambda event: self.button_click(5))
-        self.root.bind('7', lambda event: self.button_click(6))
-        self.root.bind('8', lambda event: self.button_click(7))  # Added binding for key 8
-
-        # Also bind numpad keys
-        self.root.bind('<KP_1>', lambda event: self.button_click(0))
-        self.root.bind('<KP_2>', lambda event: self.button_click(1))
-        self.root.bind('<KP_3>', lambda event: self.button_click(2))
-        self.root.bind('<KP_4>', lambda event: self.button_click(3))
-        self.root.bind('<KP_5>', lambda event: self.button_click(4))
-        self.root.bind('<KP_6>', lambda event: self.button_click(5))
-        self.root.bind('<KP_7>', lambda event: self.button_click(6))
-        self.root.bind('<KP_8>', lambda event: self.button_click(7))  # Added binding for numpad 8
+        for i in range(1, 9):
+            self.root.bind(str(i), lambda event, idx=i-1: self.button_click(idx))
+            self.root.bind(f'<KP_{i}>', lambda event, idx=i-1: self.button_click(idx))
 
     def on_os_select(self, event):
         # Clear existing buttons
@@ -149,12 +157,10 @@ class TestingApp:
         self.buttons.clear()
 
         # Create new buttons based on OS selection
-        # Changed to 8 buttons to include new option and Exit
-        num_buttons = 8 if self.os_var.get() == "Windows" else 8
+        num_buttons = 8
+        titles = self.windows_titles if self.os_var.get() == "Windows" else self.macos_titles
 
         for i in range(num_buttons):
-            titles = self.windows_titles if self.os_var.get() == "Windows" else self.macos_titles
-
             btn = ttk.Button(self.button_container,
                              text=titles[i],
                              style='Responsive.TButton',
@@ -167,8 +173,8 @@ class TestingApp:
             btn.bind('<FocusIn>', lambda e, i=i: self.on_focus_in(i))
             btn.bind('<FocusOut>', self.on_focus_out)
 
-            # Spacing between buttons - medium spacing
-            btn.grid(row=i, column=0, pady=10, padx=25, sticky="ew")
+            # Medium spacing between buttons
+            btn.grid(row=i, column=0, pady=8, padx=20, sticky="ew")
             self.buttons.append(btn)
 
         # Set focus to the first button by default
@@ -244,19 +250,20 @@ class TestingApp:
         if current_os == "Windows":
             if button_num == 0:  # AI Hardware Scanning for Windows
                 print("Starting Windows AI Hardware Scan...")
-                self.windows_ai_hardware_scan()
+                Windows_Hardware_AI_Scan.create_windows_diagnostic_app()
+
 
             elif button_num == 1:  # AI Software Scanning for Windows
                 print("Starting Windows AI Software Scan...")
-                self.windows_ai_software_scan()
+                Software_AI_Scan.create_system_analyzer()
 
             elif button_num == 2:  # AI Optimiser for Windows
                 print("Starting Windows AI Optimiser...")
-                self.windows_ai_optimiser()
+                AI_optimiser.create_ai_optimizer()
 
-            elif button_num == 3:  # Software Scanning for Windows
-                print("Starting Windows Software Scan...")
-                self.windows_software_scan()
+            elif button_num == 3:  # Security Scanner for Windows
+                print("Starting Windows Security Scan...")
+                AI_security_scanner.create_security_scanner()
 
             elif button_num == 4:  # Application Recommender for Windows
                 print("Starting Windows Application Recommender...")
@@ -266,11 +273,11 @@ class TestingApp:
                 print("Opening Windows AI Chat Console...")
                 Chat_with_AI_agent.create_mistral_chat()
 
-            elif button_num == 6:  # Custom Functionality for Windows
-                print("Starting Windows Custom Functionality...")
-                self.custom_functionality()  # Placeholder for custom functionality
+            elif button_num == 6:  # Dashboard Visualisation for Windows
+                print("Dashboard Visualisation...")
+                Dashboard_Overview.create_test_results_dashboard()
 
-            elif button_num == 7:  # Exit (now button 8)
+            elif button_num == 7:  # Exit
                 print("Exiting Windows application...")
                 self.root.quit()
                 self.root.destroy()  # Force destroy the window
@@ -282,7 +289,7 @@ class TestingApp:
 
             elif button_num == 1:  # AI Software Scanning for MacOS
                 print("Starting MacOS AI Software Scan...")
-                MacOS_Software_AI_Scan.create_system_analyzer()
+                Software_AI_Scan.create_system_analyzer()
 
 
             elif button_num == 2:  # AI Optimiser for MacOS
@@ -301,11 +308,11 @@ class TestingApp:
                 print("Launching MacOS AI Assistant...")
                 Chat_with_AI_agent.create_mistral_chat()
 
-            elif button_num == 6:  # Custom Functionality for MacOS
+            elif button_num == 6:  # Dashboard visualisation for MacOS
                 print("Dashboard Visualisation...")
                 Dashboard_Overview.create_test_results_dashboard()
 
-            elif button_num == 7:  # Exit (now button 8)
+            elif button_num == 7:  # Exit
                 print("Exiting MacOS application...")
                 self.root.quit()
                 self.root.destroy()  # Force destroy the window
@@ -317,24 +324,6 @@ class TestingApp:
         # Only remove active state if this button is not the focused one
         if self.buttons[self.focused_button_index] != button:
             button.state(['!active'])
-
-    # Placeholder method for custom functionality
-    def custom_functionality(self):
-        print("Custom Functionality not implemented yet")
-        # You will implement this method with your own functionality
-
-    # Placeholder methods for Windows functionality
-    def windows_ai_hardware_scan(self):
-        print("Windows AI Hardware Scan not implemented yet")
-
-    def windows_ai_software_scan(self):
-        print("Windows AI Software Scan not implemented yet")
-
-    def windows_ai_optimiser(self):
-        print("Windows AI Optimiser not implemented yet")
-
-    def windows_software_scan(self):
-        print("Windows Software Scan not implemented yet")
 
 
 # Add proper exit handler for the main window

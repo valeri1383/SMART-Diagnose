@@ -1,12 +1,6 @@
 def create_system_analyzer():
-    """
-    Creates and returns a complete system analyzer application that can be imported and run
-    from another file. Simply call this function to get the app running.
+    """ System analyzer function that can be imported and run from another file. """
 
-    Usage:
-        from your_module import create_system_analyzer
-        create_system_analyzer()
-    """
     import tkinter as tk
     from tkinter import ttk
     import openai
@@ -23,7 +17,7 @@ def create_system_analyzer():
     from firebase_admin import credentials
     from firebase_admin import firestore
 
-    # Set your Mistral API Key
+    # Set Mistral API Key
     API_KEY = "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"
 
     # Initialize Firebase if not already initialized
@@ -155,7 +149,6 @@ def create_system_analyzer():
                     software_info.append(
                         f"Warning: Disk {partition.mountpoint} is {usage.percent}% full - this can cause software performance issues")
             except PermissionError:
-                # Some mounted drives may require elevated permissions
                 continue
 
         return "\n".join(software_info)
@@ -200,7 +193,7 @@ def create_system_analyzer():
     class SystemAnalyzerApp:
         def __init__(self, root):
             self.root = root
-            self.root.title("System Analyser")
+            self.root.title("SMART-Diagnose")
             self.root.geometry("600x400")
 
             # Store reference to speech engine
@@ -224,7 +217,7 @@ def create_system_analyzer():
             root.grid_rowconfigure(0, weight=1)
 
             # Create title
-            title_label = ttk.Label(self.main_frame, text="AI System Analyser",
+            title_label = ttk.Label(self.main_frame, text="SMART-Diagnose",
                                     font=('Arial', 16, 'bold'))
             title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
 
@@ -239,7 +232,7 @@ def create_system_analyzer():
             self.status_label.grid(row=1, column=1, sticky=tk.W, pady=10)
 
             # Create explanation text
-            explanation = "This tool collects system information and uses Personalised AI agent to analyse it for potential issues."
+            explanation = "This tool collects system information and uses out SMART-Diagnose Personalised AI agent to analyse it for potential issues."
             explanation_label = ttk.Label(self.main_frame, text=explanation, wraplength=560)
             explanation_label.grid(row=2, column=0, columnspan=2, pady=10)
 
@@ -261,7 +254,7 @@ def create_system_analyzer():
                 self.system_info = get_software_info()
 
                 # Update UI from the main thread
-                self.root.after(0, lambda: self.status_var.set("Analysing with advance AI agent..."))
+                self.root.after(0, lambda: self.status_var.set("Analysing with SMART-Diagnose agent..."))
 
                 # Prepare prompt for AI analysis
                 user_prompt = f"""Analyse the following software information and identify potential issues or optimizations:
@@ -272,7 +265,7 @@ def create_system_analyzer():
                 1. Software conflicts or errors that may be causing performance issues
                 2. Potential OS-level problems
                 3. Application crash patterns if present
-                4. Recommendations to improve software performance
+                
 
                 Provide a clear, structured analysis with bullet points for key issues.
                 """
@@ -309,13 +302,13 @@ def create_system_analyzer():
             """Shows the results window with system info and AI analysis"""
             # Create new window with larger dimensions
             self.scan_window = tk.Toplevel(self.root)
-            self.scan_window.title("System Analysis Results")
+            self.scan_window.title("SMART-Diagnose")
             self.scan_window.geometry("1024x900")
 
             # Initialize text-to-speech engine
             engine = self.engine
 
-            # Create main frame with increased padding
+            # Create main frame
             main_frame = ttk.Frame(self.scan_window, padding="30")
             main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
@@ -324,7 +317,7 @@ def create_system_analyzer():
             self.scan_window.grid_rowconfigure(0, weight=1)
             main_frame.grid_columnconfigure(0, weight=1)
 
-            # Create widgets with larger fonts and sizes
+            # Create widgets
             info_label = ttk.Label(main_frame, text="System Information", font=('Arial', 20, 'bold'))
             info_label.grid(row=0, column=0, pady=(0, 20))
 
@@ -333,7 +326,7 @@ def create_system_analyzer():
             system_info_widget.insert(tk.END, self.system_info)
             system_info_widget.config(state="disabled")
 
-            analysis_label = ttk.Label(main_frame, text="AI Analysis", font=('Arial', 20, 'bold'))
+            analysis_label = ttk.Label(main_frame, text="SMART-Diagnose Analys", font=('Arial', 20, 'bold'))
             analysis_label.grid(row=2, column=0, pady=(0, 15))
 
             ai_analysis_widget = tk.Text(main_frame, height=23, width=100, font=('Arial', 16))
@@ -403,7 +396,7 @@ def create_system_analyzer():
             )
             speak_ai_button.grid(row=0, column=1, padx=10)
 
-            # Changed from "Stop" to "Return to Main Menu"
+
             return_button = ttk.Button(
                 buttons_frame,
                 text="Return to Main Menu",
@@ -474,7 +467,6 @@ def create_system_analyzer():
         app = SystemAnalyzerApp(root)
         root.mainloop()
     else:
-        # When imported, just create and return the application
         root = tk.Tk()
         app = SystemAnalyzerApp(root)
         root.mainloop()

@@ -1,10 +1,6 @@
 def create_mistral_chat(parent_root=None):
     """
-    Creates a Mistral AI Chat interface that can be integrated with a parent application.
-    Uses thread-safe mechanisms for UI updates.
-
-    Args:
-        parent_root: The parent Tk root window. If None, creates its own window.
+    Chat with AI Agent app.
     """
     import tkinter as tk
     from tkinter import ttk, scrolledtext
@@ -23,13 +19,13 @@ def create_mistral_chat(parent_root=None):
     if parent_root is None:
         # Standalone mode - create our own root
         chat_window = tk.Tk()
-        chat_window.title("Personalised AI Agent")
+        chat_window.title("Personalised SMART Agent")
         chat_window.geometry("800x600")
         is_standalone = True
     else:
         # Integrated mode - create a toplevel window
         chat_window = tk.Toplevel(parent_root)
-        chat_window.title("Personalised AI Agent")
+        chat_window.title("Personalised SMART Agent")
         chat_window.geometry("800x600")
         chat_window.transient(parent_root)  # Set as transient to parent
         is_standalone = False
@@ -89,7 +85,7 @@ def create_mistral_chat(parent_root=None):
     )
     message_input.pack(fill=tk.X, side=tk.LEFT, expand=True, padx=(0, 10))
 
-    # Create send button (defining it here but packing later)
+    # Create send button
     send_button = ttk.Button(
         input_frame,
         text="Send",
@@ -108,7 +104,7 @@ def create_mistral_chat(parent_root=None):
             chat_display.insert(tk.END, f"\n[{timestamp}] You:\n", "user_header")
             chat_display.tag_configure("user_header", foreground="#007AFF")
         else:
-            chat_display.insert(tk.END, f"\n[{timestamp}] AI Agent:\n", "assistant_header")
+            chat_display.insert(tk.END, f"\n[{timestamp}] SMART Agent:\n", "assistant_header")
             chat_display.tag_configure("assistant_header", foreground="#FF3B30")
 
         chat_display.insert(tk.END, f"{content}\n")
@@ -269,11 +265,10 @@ def create_mistral_chat(parent_root=None):
 
     # Display welcome message as a Personalised AI agent
     welcome_message = (
-        "Hello! I'm your Personalised AI Agent. I'm here to assist you with any "
+        "Hello! I'm your Personalised SMART Agent. I'm here to assist you with any "
         "questions, information, or tasks you need help with. My advanced AI capabilities "
         "allow me to understand your unique needs and provide tailored responses.\n\n"
         "How can I help you today?\n\n"
-        "TIP: Press Enter to send a message. Use Shift+Enter for multi-line messages."
     )
     append_message("assistant", welcome_message)
 

@@ -1,12 +1,6 @@
 def create_ai_optimizer():
-    """
-    Creates and returns a complete AI optimizer application that can be imported and run
-    from another file. Simply call this function to get the app running.
+    """ This is AI optimizer application that is used in the main menu. """
 
-    Usage:
-        from your_module import create_ai_optimizer
-        create_ai_optimizer()
-    """
     import tkinter as tk
     from tkinter import ttk
     import openai
@@ -20,7 +14,7 @@ def create_ai_optimizer():
     class AIOptimizerApp:
         def __init__(self, root, is_toplevel=False):
             self.root = root
-            self.root.title("AI Optimizer")
+            self.root.title("SMART-Diagnose")
             self.root.geometry("600x400")
 
             # Store whether this is a toplevel window
@@ -41,7 +35,7 @@ def create_ai_optimizer():
             self._thread_error = None
             self._thread_status = None
 
-            # API Key - replace with your own
+            # AI API Key
             self.API_KEY = "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"
 
             # Configure main window
@@ -52,7 +46,7 @@ def create_ai_optimizer():
             root.grid_rowconfigure(0, weight=1)
 
             # Create title
-            title_label = ttk.Label(self.main_frame, text="AI Performance Optimizer",
+            title_label = ttk.Label(self.main_frame, text="SMART Performance Optimizer",
                                     font=('Arial', 16, 'bold'))
             title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
 
@@ -67,7 +61,7 @@ def create_ai_optimizer():
             self.status_label.grid(row=1, column=1, sticky=tk.W, pady=10)
 
             # Create explanation text
-            explanation = "This tool analyzes your system resource usage and provides AI-powered recommendations to optimize performance and efficiency."
+            explanation = "This SMART tool analyzes your system resource usage and provides AI-powered recommendations to optimize performance and efficiency."
             explanation_label = ttk.Label(self.main_frame, text=explanation, wraplength=560)
             explanation_label.grid(row=2, column=0, columnspan=2, pady=10)
 
@@ -196,7 +190,7 @@ def create_ai_optimizer():
 
                 # Update UI from the main thread - using a thread-safe approach
                 # Instead of directly updating, we'll store the result and update in the main thread later
-                self._thread_status = "Generating AI optimization recommendations..."
+                self._thread_status = "Generating SMART optimization recommendations..."
 
                 # Prepare prompt for AI analysis
                 if opt_type == "performance":
@@ -210,7 +204,7 @@ def create_ai_optimizer():
 
                 {metrics_str}
 
-                Please provide:
+                Please provide and sound like personal AI agent:
                 1. A brief analysis of the current system state
                 2. 3-5 specific recommendations for optimization
                 3. Expected performance improvements for each recommendation
@@ -233,7 +227,7 @@ def create_ai_optimizer():
             """Shows the results window with system metrics and AI recommendations"""
             # Create new window with larger dimensions
             self.optimization_window = tk.Toplevel(self.root)
-            self.optimization_window.title("AI Optimization Results")
+            self.optimization_window.title("SMART Optimization Results")
             self.optimization_window.geometry("1024x900")
 
             # Create main frame with increased padding
@@ -258,7 +252,7 @@ def create_ai_optimizer():
             system_info.insert(tk.END, metrics_text)
             system_info.config(state="disabled")
 
-            analysis_label = ttk.Label(main_frame, text="AI Optimization Recommendations", font=('Arial', 20, 'bold'))
+            analysis_label = ttk.Label(main_frame, text="SMART Optimization Recommendations", font=('Arial', 20, 'bold'))
             analysis_label.grid(row=2, column=0, pady=(0, 15))
 
             ai_analysis = tk.Text(main_frame, height=23, width=100, font=('Arial', 16))
@@ -406,7 +400,6 @@ def create_ai_optimizer():
                 self.optimization_window = None
 
     # Create the application with a Toplevel window instead of Tk
-    # This way it can be part of an existing Tkinter application
     if __name__ == "__main__":
         # If running standalone, use Tk as the root
         root = tk.Tk()

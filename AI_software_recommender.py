@@ -1,11 +1,6 @@
 def create_app_recommender():
     """
-    Creates and returns a complete app recommender application that can be imported and run
-    from another file. Simply call this function to get the app running.
-
-    Usage:
-        from your_module import create_app_recommender
-        create_app_recommender()
+    App recommender application that imported into the main file
     """
     import tkinter as tk
     from tkinter import ttk
@@ -20,7 +15,7 @@ def create_app_recommender():
     class AppRecommenderApp:
         def __init__(self, root, is_toplevel=False):
             self.root = root
-            self.root.title("App Recommender")
+            self.root.title("SMART Recommender")
             self.root.geometry("600x400")
 
             # Store whether this is a toplevel window
@@ -52,7 +47,7 @@ def create_app_recommender():
             root.grid_rowconfigure(0, weight=1)
 
             # Create title
-            title_label = ttk.Label(self.main_frame, text="App Recommender",
+            title_label = ttk.Label(self.main_frame, text="SMART Recommender",
                                     font=('Arial', 16, 'bold'))
             title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
 
@@ -67,7 +62,7 @@ def create_app_recommender():
             self.status_label.grid(row=1, column=1, sticky=tk.W, pady=10)
 
             # Create explanation text
-            explanation = "This tool scans your installed applications and uses AI to recommend new software that would complement your current setup."
+            explanation = "This SMART tool scans your installed applications and uses Personalised AI Agent to recommend new software that would complement your current setup."
             explanation_label = ttk.Label(self.main_frame, text=explanation, wraplength=560)
             explanation_label.grid(row=2, column=0, columnspan=2, pady=10)
 
@@ -137,7 +132,7 @@ def create_app_recommender():
                 scan_results = self.scan_installed_apps()
 
                 # Update thread status
-                self._thread_status = "Getting AI app recommendations..."
+                self._thread_status = "Getting SMART app recommendations..."
 
                 # Get AI recommendations
                 ai_response = self.get_app_recommendations(scan_results, rec_type)
@@ -157,9 +152,6 @@ def create_app_recommender():
         def scan_installed_apps(self):
             """
             Scan for installed applications.
-
-            Returns:
-                dict: Information about installed applications
             """
             try:
                 # Collect basic system info
@@ -176,8 +168,6 @@ def create_app_recommender():
                     self._scan_macos_apps(results)
                 elif system == "Windows":
                     self._scan_windows_apps(results)
-                elif system == "Linux":
-                    self._scan_linux_apps(results)
 
                 # Categorize apps
                 self._categorize_apps(results)
@@ -254,29 +244,6 @@ def create_app_recommender():
             except Exception as e:
                 raise Exception(f"Error scanning Windows apps: {str(e)}")
 
-        def _scan_linux_apps(self, results):
-            """Scan for installed applications on Linux"""
-            try:
-                # Try using the 'apt' package manager
-                cmd = "apt list --installed 2>/dev/null | grep -v 'Listing...' | head -n 50 || echo ''"
-                try:
-                    apps_output = subprocess.check_output(cmd, shell=True).decode('utf-8', errors='ignore')
-                    if apps_output.strip():
-                        apps_list = apps_output.strip().split('\n')
-                        for app_line in apps_list:
-                            if app_line:
-                                # Format is typically name/source,version [arch]
-                                app_name = app_line.split('/')[0] if '/' in app_line else app_line
-                                results["installed_apps"].append({
-                                    "name": app_name,
-                                    "path": "/usr/bin/" + app_name.lower()
-                                })
-                except:
-                    # Fallback
-                    results["installed_apps"].append({"name": "Example Linux App", "path": "/usr/bin/example"})
-                    results["note"] = "Linux app scanning limited in this version"
-            except Exception as e:
-                raise Exception(f"Error scanning Linux apps: {str(e)}")
 
         def _categorize_apps(self, results):
             """Categorize installed applications"""
@@ -295,9 +262,6 @@ def create_app_recommender():
 
                 "Media": ["iTunes", "Music", "Spotify", "VLC", "QuickTime", "iMovie", "Final Cut",
                           "Premier", "After Effects", "Netflix", "Hulu", "Disney", "YouTube"],
-
-                "Games": ["Steam", "Epic Games", "Battle.net", "Minecraft", "League of Legends",
-                          "Fortnite", "Roblox", "Origin", "Uplay"],
 
                 "Utilities": ["Finder", "Explorer", "Chrome", "Safari", "Firefox", "Edge", "Opera",
                               "Brave", "CleanMyMac", "CCleaner", "Time Machine", "Backup", "Antivirus",
@@ -330,13 +294,6 @@ def create_app_recommender():
         def get_app_recommendations(self, scan_results, rec_type="all"):
             """
             Get AI-powered app recommendations based on installed software.
-
-            Args:
-                scan_results (dict): Results from scan_installed_apps()
-                rec_type (str): Type of recommendations to focus on
-
-            Returns:
-                str: AI-generated app recommendations
             """
             try:
                 # Format installed apps for the prompt
@@ -442,7 +399,7 @@ def create_app_recommender():
             installed_apps.insert(tk.END, apps_text)
             installed_apps.config(state="disabled")
 
-            analysis_label = ttk.Label(main_frame, text="AI App Recommendations", font=('Arial', 20, 'bold'))
+            analysis_label = ttk.Label(main_frame, text="SMART-AI App Recommendations", font=('Arial', 20, 'bold'))
             analysis_label.grid(row=2, column=0, pady=(0, 15))
 
             ai_analysis = tk.Text(main_frame, height=20, width=100, font=('Arial', 16))

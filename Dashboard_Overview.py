@@ -13,24 +13,22 @@ from firebase_admin import firestore
 import threading
 import random
 import traceback
+import os
 
 
 def create_test_results_dashboard(parent_window=None):
     """
-    Creates a dashboard to visualize test results from Firestore database.
-
-    Args:
-        parent_window: Optional parent window to embed the dashboard
+    Dashboard to visualize the test results from Firestore database.
     """
     # If no parent window is provided, create a new root window
     if parent_window is None:
         root = tk.Tk()
-        root.title("Test Results Dashboard")
+        root.title("SMART Test Results Dashboard")
         root.geometry("1200x950")
     else:
         root = parent_window
         if isinstance(root, tk.Toplevel):
-            root.title("Test Results Dashboard")
+            root.title("SMART Test Results Dashboard")
             root.geometry("1200x950")
 
     # Create the dashboard
@@ -56,7 +54,7 @@ class TestResultsDashboard:
         header_frame.pack(fill=tk.X, pady=(0, 10))
 
         # Title
-        title_label = ttk.Label(header_frame, text="Test Results Dashboard",
+        title_label = ttk.Label(header_frame, text="SMART Test Results Dashboard",
                                 font=("Arial", 24, "bold"))
         title_label.pack(side=tk.LEFT)
 
@@ -138,7 +136,7 @@ class TestResultsDashboard:
             loading_label.pack(expand=True, pady=40)
 
     def create_kpi_card(self, parent, title, value, bg_color):
-        """Create a KPI card with direct label instead of StringVar"""
+        """Create a KPI card with direct label"""
         # Card frame
         card = tk.Frame(parent, bd=1, relief=tk.RAISED)
         card.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
@@ -249,21 +247,36 @@ class TestResultsDashboard:
                 print(f"Using existing Firebase app: {app.name}")
             except ValueError:
                 # Not initialized yet, use credentials
-                cred = credentials.Certificate({
-                    "type": "service_account",
-                    "project_id": "diagnostic-app-e1587",
-                    "private_key_id": "b90d2679828c37b3d5bcc22b4d6b90f8119ced9d",
-                    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7vWOdXTmPyWDY\nEk4Cic8PoVUnPcLJU5/6AJd9c1BnuElJWaxABXwGaMaoTv6G7jGxPUt/35f+84PQ\n1HaCFFI3kgn+SnU9zibgldqIU3bt9jjfQBPu0VHPNSFzFEv9zBTKo74XIEMUZ88B\n4H7RE2CGwxv6klwJzwUF78iPJhziuWmbWUd+hNxGX17zGHO1DfJaNnqazTJnJ7ZZ\nLVYhLCzdn/NBiPa6pQwEqLmuc0oG3Et7FIR20lu27uOhFMu8DHEUvWimbiP0YgId\nSBhJGOdi9V9lwmhey4OB4988EbQX/H/J+dsbsdDUVv6FR+I6RMptYJGrrm/eyR5D\n8Yt7MNQxAgMBAAECggEACihzLV6P8MG6pbZH1kdSlsvp6Zej5HTL4SELEVSd8x67\niGZ7tXMWhNpCdXTgvLhCpA5m+WJFvRu79B6q0tr6n9sdA09QDKoM3HX/PwUVGEcM\nSLgU3AUjYgzD5JAilHboYRZ/AI1UU9RSFQ3qjrF3tZL0/pfQtw8mfG2+8k/jnDjI\nTnmUlOO7xCC5CWY1VTqdaCxyUFvhyn6rYUyMZyD2L+Mrp8uXFEekIZ6WSOjyxa4E\nwVQ3iYaKROycFAFXpvRQoa8d50k3A9YRYszpWabj0rjMUOT7Eb9vJOrvONJWq1M/\nx8hdM1q8dmVCGg6HaocB5K481qkmVmHtB0RzlyAcYQKBgQDdJv0ymIqSG5bOi0zA\nmkqSCm0L3hfn3PIAksF1MtdAmctJPhSGuQ3n6d5TEPnLjm6djJF3fl66qcyCfGxa\n8YqD1vtWwJpIjGfPR93ny1OCTLwtgNnOSJrSZ1XPApr+sd/LrdV42r6D/k4jqXPY\nEg/oqqJQGAoIn6ddB6Sii8DbhQKBgQDZUpS/9tktcaSHAuxHSYx2fZGE6i0fVzUk\nO/VbiiwcSO5A+UH7o4qxqIcfd9g8S5xuA8+ofroa9Bd6XeCh3I7zmCnFMtmcYIkN\n87b+NB2nY5IQIStP0ZHM8fnpQd60aZVVBzIHmS0RjiZGMD/vg23igVNxl9SOjc3o\nbEZZu5+nvQKBgQCL3kHbAyD44VwSy4VCdxLcpJ1tGQ0ThujDtg2Gux3qbJpme03u\nGxIRcBc9gAoMVMve9u11nsX41rVSfbDmH8fUNF6H8o5hffOV5EUTecQaL8AAI3Md\nhUvt8I8TuvkeRo9dOVc+9VHzFx6CbYSnzlyjcW/wqhOGersWGmRkrXDPJQKBgF/C\nocUMspnxr3vGb/Lhl8FGh263+XYL6WC0AuN5OQKlqEZ9DvQhFiY+inv1RRUchCt+\nBmzKmprx376Ny0PHej4gWJeKVpUvfHTnZUUSFdcCawQseXdMcyCJp4N/APEibSjw\naL0sY82Og5L+A844bZ0XO3ucWY8PMSIvQ7iakjlJAoGAPSAtuC7ijKYT1GeRPaWa\nxbyzadk3eTMuo1FU6YhTtEKxPVLAs3kfQqwncxeDz4jUHN4M3JY/armKAeDhbnGE\nWPYDqSddcjTGNVz7gZcFIzoU+Ispnugm1n6CaIUYPHSi5hOgLS6VcdvrP8VY7be4\nFkyxIplYqIxCzok0WFgbsWA=\n-----END PRIVATE KEY-----\n",
-                    "client_email": "firebase-adminsdk-fbsvc@diagnostic-app-e1587.iam.gserviceaccount.com",
-                    "client_id": "105288815211730348964",
-                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                    "token_uri": "https://oauth2.googleapis.com/token",
-                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40diagnostic-app-e1587.iam.gserviceaccount.com",
-                    "universe_domain": "googleapis.com"
-                })
-                app = firebase_admin.initialize_app(cred)
-                print(f"Initialized new Firebase app: {app.name}")
+                # SECURITY IMPROVEMENT: Use environment variables or a config file for credentials
+                # instead of hardcoding them in the source code
+                try:
+                    # Try to load from environment variable
+                    cred_path = os.environ.get('FIREBASE_CREDENTIALS_PATH')
+                    if cred_path and os.path.exists(cred_path):
+                        cred = credentials.Certificate(cred_path)
+                    else:
+                        # Fall back to the original credentials (in production, this should be replaced)
+                        cred = credentials.Certificate({
+                            "type": "service_account",
+                            "project_id": "diagnostic-app-e1587",
+                            "private_key_id": "b90d2679828c37b3d5bcc22b4d6b90f8119ced9d",
+                            "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7vWOdXTmPyWDY\nEk4Cic8PoVUnPcLJU5/6AJd9c1BnuElJWaxABXwGaMaoTv6G7jGxPUt/35f+84PQ\n1HaCFFI3kgn+SnU9zibgldqIU3bt9jjfQBPu0VHPNSFzFEv9zBTKo74XIEMUZ88B\n4H7RE2CGwxv6klwJzwUF78iPJhziuWmbWUd+hNxGX17zGHO1DfJaNnqazTJnJ7ZZ\nLVYhLCzdn/NBiPa6pQwEqLmuc0oG3Et7FIR20lu27uOhFMu8DHEUvWimbiP0YgId\nSBhJGOdi9V9lwmhey4OB4988EbQX/H/J+dsbsdDUVv6FR+I6RMptYJGrrm/eyR5D\n8Yt7MNQxAgMBAAECggEACihzLV6P8MG6pbZH1kdSlsvp6Zej5HTL4SELEVSd8x67\niGZ7tXMWhNpCdXTgvLhCpA5m+WJFvRu79B6q0tr6n9sdA09QDKoM3HX/PwUVGEcM\nSLgU3AUjYgzD5JAilHboYRZ/AI1UU9RSFQ3qjrF3tZL0/pfQtw8mfG2+8k/jnDjI\nTnmUlOO7xCC5CWY1VTqdaCxyUFvhyn6rYUyMZyD2L+Mrp8uXFEekIZ6WSOjyxa4E\nwVQ3iYaKROycFAFXpvRQoa8d50k3A9YRYszpWabj0rjMUOT7Eb9vJOrvONJWq1M/\nx8hdM1q8dmVCGg6HaocB5K481qkmVmHtB0RzlyAcYQKBgQDdJv0ymIqSG5bOi0zA\nmkqSCm0L3hfn3PIAksF1MtdAmctJPhSGuQ3n6d5TEPnLjm6djJF3fl66qcyCfGxa\n8YqD1vtWwJpIjGfPR93ny1OCTLwtgNnOSJrSZ1XPApr+sd/LrdV42r6D/k4jqXPY\nEg/oqqJQGAoIn6ddB6Sii8DbhQKBgQDZUpS/9tktcaSHAuxHSYx2fZGE6i0fVzUk\nO/VbiiwcSO5A+UH7o4qxqIcfd9g8S5xuA8+ofroa9Bd6XeCh3I7zmCnFMtmcYIkN\n87b+NB2nY5IQIStP0ZHM8fnpQd60aZVVBzIHmS0RjiZGMD/vg23igVNxl9SOjc3o\nbEZZu5+nvQKBgQCL3kHbAyD44VwSy4VCdxLcpJ1tGQ0ThujDtg2Gux3qbJpme03u\nGxIRcBc9gAoMVMve9u11nsX41rVSfbDmH8fUNF6H8o5hffOV5EUTecQaL8AAI3Md\nhUvt8I8TuvkeRo9dOVc+9VHzFx6CbYSnzlyjcW/wqhOGersWGmRkrXDPJQKBgF/C\nocUMspnxr3vGb/Lhl8FGh263+XYL6WC0AuN5OQKlqEZ9DvQhFiY+inv1RRUchCt+\nBmzKmprx376Ny0PHej4gWJeKVpUvfHTnZUUSFdcCawQseXdMcyCJp4N/APEibSjw\naL0sY82Og5L+A844bZ0XO3ucWY8PMSIvQ7iakjlJAoGAPSAtuC7ijKYT1GeRPaWa\nxbyzadk3eTMuo1FU6YhTtEKxPVLAs3kfQqwncxeDz4jUHN4M3JY/armKAeDhbnGE\nWPYDqSddcjTGNVz7gZcFIzoU+Ispnugm1n6CaIUYPHSi5hOgLS6VcdvrP8VY7be4\nFkyxIplYqIxCzok0WFgbsWA=\n-----END PRIVATE KEY-----\n",
+                            "client_email": "firebase-adminsdk-fbsvc@diagnostic-app-e1587.iam.gserviceaccount.com",
+                            "client_id": "105288815211730348964",
+                            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                            "token_uri": "https://oauth2.googleapis.com/token",
+                            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                            "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40diagnostic-app-e1587.iam.gserviceaccount.com",
+                            "universe_domain": "googleapis.com"
+                        })
+                    app = firebase_admin.initialize_app(cred)
+                    print(f"Initialized new Firebase app: {app.name}")
+                except Exception as init_error:
+                    self.status_var.set(f"Firebase initialization error: {str(init_error)}")
+                    traceback.print_exc()
+                    # Show empty charts with "No data" message
+                    self.show_empty_charts()
+                    return
 
             # Get the time range
             time_filter = self.time_filter.get()
@@ -436,12 +449,27 @@ class TestResultsDashboard:
             for _, row in df.iterrows():
                 if 'details' in row and isinstance(row['details'], dict):
                     details = row['details']
-                    if 'cpu_usage' in details:
-                        cpu_usage.append(float(details['cpu_usage']))
-                    if 'memory_usage' in details:
-                        memory_usage.append(float(details['memory_usage']))
-                    if 'disk_usage' in details:
-                        disk_usage.append(float(details['disk_usage']))
+
+                    # Handle None values or missing keys for CPU usage
+                    if 'cpu_usage' in details and details['cpu_usage'] is not None:
+                        try:
+                            cpu_usage.append(float(details['cpu_usage']))
+                        except (ValueError, TypeError):
+                            print(f"Invalid CPU usage value: {details['cpu_usage']}")
+
+                    # Handle None values or missing keys for memory usage
+                    if 'memory_usage' in details and details['memory_usage'] is not None:
+                        try:
+                            memory_usage.append(float(details['memory_usage']))
+                        except (ValueError, TypeError):
+                            print(f"Invalid memory usage value: {details['memory_usage']}")
+
+                    # Handle None values or missing keys for disk usage
+                    if 'disk_usage' in details and details['disk_usage'] is not None:
+                        try:
+                            disk_usage.append(float(details['disk_usage']))
+                        except (ValueError, TypeError):
+                            print(f"Invalid disk usage value: {details['disk_usage']}")
 
             if cpu_usage or memory_usage or disk_usage:
                 avg_cpu = sum(cpu_usage) / len(cpu_usage) if cpu_usage else 0

@@ -7,15 +7,15 @@ from threading import Thread
 import pyttsx3
 
 def show_macos_scan_window(root):
-    # Create new window with larger dimensions
+    # Create new window
     scan_window = tk.Toplevel(root)
-    scan_window.title("System Analysis Results")
+    scan_window.title("SMART-Diagnose")
     scan_window.geometry("1024x900")
 
     # Initialize text-to-speech engine
     engine = pyttsx3.init()
 
-    # Create main frame with increased padding
+    # Create main frame
     main_frame = ttk.Frame(scan_window, padding="30")
     main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
@@ -24,7 +24,7 @@ def show_macos_scan_window(root):
     scan_window.grid_rowconfigure(0, weight=1)
     main_frame.grid_columnconfigure(0, weight=1)
 
-    # Create widgets with larger fonts and sizes
+    # Create widgets
     info_label = ttk.Label(main_frame,
                           text="System Information",
                           font=('Arial', 20, 'bold'))
@@ -37,7 +37,7 @@ def show_macos_scan_window(root):
     system_info.grid(row=1, column=0, pady=(0, 25))
 
     analysis_label = ttk.Label(main_frame,
-                              text="AI Analysis",
+                              text="SMART-Diagnose Analysis",
                               font=('Arial', 20, 'bold'))
     analysis_label.grid(row=2, column=0, pady=(0, 15))
 
