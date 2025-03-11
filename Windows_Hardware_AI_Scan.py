@@ -12,6 +12,7 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 import platform
 import os
+import queue
 
 
 def create_windows_diagnostic_app():
@@ -159,6 +160,9 @@ def create_windows_diagnostic_app():
                                    mode='indeterminate')
         progress.grid(row=7, column=0)
 
+        # Create a message queue for thread-safe communication
+        message_queue = queue.Queue()
+
         def get_windows_system_info():
             cpu_usage = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
@@ -255,33 +259,62 @@ Note: Some Windows-specific information couldn't be retrieved. Error: {str(e)}
                     auto_update=True
                 )
 
-        def run_scan():
-            # Get system info
-            system_report = get_windows_system_info()
-            scan_window.after(0, update_system_info, system_report)
-
-            # Get AI analysis
-            user_prompt = f"Analyze the following system performance data and suggest optimizations. Speak as Personalised Technical bot:\n{system_report}"
-
+        # Process messages from the queue and update UI on the main thread
+        def process_message_queue():
             try:
-                response = chat_with_mistral(user_prompt)
-                # Update GUI with results
-                scan_window.after(0, update_ai_analysis, response)
-                scan_window.after(0, lambda: scan_complete(system_report, response))
+                while not message_queue.empty():
+                    message = message_queue.get_nowait()
+                    message_type = message.get("type")
+
+                    if message_type == "system_info":
+                        update_system_info(message.get("data"))
+                    elif message_type == "ai_analysis":
+                        update_ai_analysis(message.get("data"))
+                    elif message_type == "scan_complete":
+                        scan_complete(message.get("system_report"), message.get("ai_response"))
             except Exception as e:
-                error_message = f"Error during analysis: {str(e)}"
-                scan_window.after(0, update_ai_analysis, error_message)
-                scan_window.after(0, lambda: scan_complete(system_report, error_message))
-                # Update test status to Failed in case of error
-                update_test_status(
-                    results_ref,
-                    test_id,
-                    "Failed",
-                    system_report,
-                    error_message,
-                    result_var,
-                    auto_update=True
-                )
+                print(f"Error processing messages: {e}")
+
+            # Schedule to check queue again
+            scan_window.after(100, process_message_queue)
+
+        def run_scan():
+            try:
+                # Get system info
+                system_report = get_windows_system_info()
+                # Put system info in queue instead of directly updating UI
+                message_queue.put({"type": "system_info", "data": system_report})
+
+                # Get AI analysis
+                user_prompt = f"Analyze the following system performance data and suggest optimizations. Speak as Personalised Technical bot:\n{system_report}"
+
+                try:
+                    response = chat_with_mistral(user_prompt)
+                    # Put AI response in queue instead of directly updating UI
+                    message_queue.put({"type": "ai_analysis", "data": response})
+                    message_queue.put(
+                        {"type": "scan_complete", "system_report": system_report, "ai_response": response})
+                except Exception as e:
+                    error_message = f"Error during analysis: {str(e)}"
+                    message_queue.put({"type": "ai_analysis", "data": error_message})
+                    message_queue.put(
+                        {"type": "scan_complete", "system_report": system_report, "ai_response": error_message})
+
+                    # Update test status to Failed in case of error
+                    update_test_status(
+                        results_ref,
+                        test_id,
+                        "Failed",
+                        system_report,
+                        error_message,
+                        result_var,
+                        auto_update=True
+                    )
+            except Exception as e:
+                print(f"Error in run_scan: {e}")
+
+        # Start the message queue processor
+        scan_window.after(100, process_message_queue)
 
         # Start progress bar and scan
         progress.start()
@@ -309,7 +342,7 @@ Note: Some Windows-specific information couldn't be retrieved. Error: {str(e)}
             "device_id": get_device_id(),
             "details": {
                 "start_time": timestamp,
-                "os": "Windows"
+                "os": "Windows" if platform.system() == "Windows" else platform.system()
             }
         }
 
@@ -373,11 +406,52 @@ Note: Some Windows-specific information couldn't be retrieved. Error: {str(e)}
     }
 
 
-# Usage
-if __name__ == "__main__":
-    # This code only runs when the script is executed directly, not when imported
+def create_windows_diagnostic_app_standalone():
+    """
+    A simple wrapper function that creates the Windows diagnostic app
+    and returns a function that can be called to show the diagnostic window.
+    This is the main function to import in other modules.
+    """
+    # Get the diagnostic app functions
     diagnostic_app = create_windows_diagnostic_app()
 
+    # Return the main function that consumers will use
+    def show_windows_diagnostic(parent_window=None):
+        """
+        Shows the Windows diagnostic window.
+
+        Args:
+            parent_window: The parent tkinter window. If None, a new Tk root will be created.
+
+        Returns:
+            The scan window object.
+        """
+        if parent_window is None:
+            # Create a new root window if none provided
+            root = tk.Tk()
+            root.title("Windows Diagnostic")
+            root.withdraw()  # Hide the root window
+
+            # Show the scan window
+            scan_window = diagnostic_app["show_scan_window"](root)
+
+            # Configure the scan window to destroy the root when closed
+            scan_window.protocol("WM_DELETE_WINDOW", lambda: (scan_window.destroy(), root.destroy()))
+
+            return scan_window
+        else:
+            # Use the provided parent window
+            return diagnostic_app["show_scan_window"](parent_window)
+
+    # Return the function
+    return show_windows_diagnostic
+
+
+# This is the function you should import in other modules
+windows_hardware_scan = create_windows_diagnostic_app_standalone()
+
+# Example of usage when run directly
+if __name__ == "__main__":
     # Create a simple root window
     root = tk.Tk()
     root.title("Windows Diagnostic App")
@@ -387,7 +461,7 @@ if __name__ == "__main__":
     start_button = ttk.Button(
         root,
         text="Start System Scan",
-        command=lambda: diagnostic_app["show_scan_window"](root)
+        command=lambda: windows_hardware_scan(root)
     )
     start_button.pack(pady=30)
 

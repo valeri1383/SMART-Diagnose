@@ -4,7 +4,6 @@ def check_install_libraries():
     import subprocess
     import sys
 
-
     # List of required packages
     required_libs = ["matplotlib", "pandas", "firebase_admin", "psutil", "pyttsx3", "requests", "openai"]
 
@@ -17,21 +16,30 @@ def check_install_libraries():
             subprocess.check_call([sys.executable, "-m", "pip", "install", lib])
             print(f"✓ {lib} installed successfully")
 
+
 # Call the function before any imports
 check_install_libraries()
-
 
 import tkinter as tk
 from tkinter import ttk
 import Software_AI_Scan, MacOS_Hardware_AI_Scan, Chat_with_AI_agent, AI_optimiser, AI_security_scanner, \
     AI_software_recommender, Dashboard_Overview, Windows_Hardware_AI_Scan
+import platform
 
 
 class TestingApp:
     def __init__(self, root):
         self.root = root
         self.root.title("SMART-Diagnose")
-        self.root.geometry("950x880")
+
+        # Get current operating system
+        self.current_os = platform.system()
+
+        # Platform-specific window size
+        if self.current_os == "Darwin":  # macOS
+            self.root.geometry("950x880")
+        else:  # Windows - smaller to fit screen better
+            self.root.geometry("850x780")
 
         # Initialize StringVar for OS selection first
         self.os_var = tk.StringVar(value="MacOS")  # Set default value
@@ -56,14 +64,24 @@ class TestingApp:
 
         # Create a custom style for the buttons
         self.style = ttk.Style()
-        self.style.configure('Responsive.TButton',
-                             padding=(20, 9),
-                             font=('Arial', 22, 'bold'),
-                             borderwidth=2,
-                             width=30,
-                             height=2.3)
 
-        # Button states styling
+        # Configure button style with platform-specific adjustments
+        if self.current_os == "Darwin":  # macOS
+            self.style.configure('Responsive.TButton',
+                                 padding=(20, 9),
+                                 font=('Arial', 22, 'bold'),
+                                 borderwidth=2,
+                                 width=30,
+                                 height=2.3)
+        else:  # Windows
+            self.style.configure('Responsive.TButton',
+                                 padding=(12, 6),
+                                 font=('Arial', 16, 'bold'),
+                                 borderwidth=2,
+                                 width=26,
+                                 height=1.7)
+
+        # Button states styling - consistent across platforms
         self.style.map('Responsive.TButton',
                        foreground=[('pressed', '#FF4444'),
                                    ('active', '#2196F3'),
@@ -76,8 +94,9 @@ class TestingApp:
                        borderwidth=[('pressed', 3),
                                     ('!pressed', 2)])
 
-        # Create and configure main frame
-        self.main_frame = ttk.Frame(self.root, padding="15")
+        # Create and configure main frame with platform-specific padding
+        main_padding = "15" if self.current_os == "Darwin" else "12"
+        self.main_frame = ttk.Frame(self.root, padding=main_padding)
         self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
         # Configure column and row weights for centering
@@ -89,44 +108,57 @@ class TestingApp:
         self.header_frame = ttk.Frame(self.main_frame)
         self.header_frame.grid(row=0, column=0, pady=8)
 
-        # Add title with smaller font
+        # Add title with platform-specific font
+        title_font_size = 28 if self.current_os == "Darwin" else 22
         self.title_label = ttk.Label(self.header_frame,
                                      text="SMART-Diagnose",
-                                     font=('Arial', 28, 'bold'))
-        self.title_label.grid(row=0, column=0, pady=8)
+                                     font=('Arial', title_font_size, 'bold'))
+        title_pady = 8 if self.current_os == "Darwin" else 8
+        self.title_label.grid(row=0, column=0, pady=title_pady)
 
-        # Reduced OS selection label
+        # OS selection label with platform-specific font
+        os_label_font_size = 18 if self.current_os == "Darwin" else 14
         self.os_label = ttk.Label(self.header_frame,
                                   text="Select Operating System:",
-                                  font=('Arial', 18, 'bold'))
-        self.os_label.grid(row=1, column=0, pady=8)
+                                  font=('Arial', os_label_font_size, 'bold'))
+        self.os_label.grid(row=1, column=0, pady=6)
 
-        # Dropdown style
+        # Dropdown style - platform-specific
+        dropdown_padding = 8 if self.current_os == "Darwin" else 4
         self.style.configure('TCombobox',
-                             padding=8,
+                             padding=dropdown_padding,
                              font=('Arial', 10))
 
+        # Dropdown with platform-specific settings
+        dropdown_font_size = 16 if self.current_os == "Darwin" else 12
+        dropdown_width = 18 if self.current_os == "Darwin" else 14
         self.os_dropdown = ttk.Combobox(self.header_frame,
                                         textvariable=self.os_var,
                                         values=["MacOS", "Windows"],
                                         state="readonly",
-                                        font=('Arial', 16),
-                                        width=18)
-        self.os_dropdown.grid(row=2, column=0, pady=10)
+                                        font=('Arial', dropdown_font_size),
+                                        width=dropdown_width)
+        dropdown_pady = 10 if self.current_os == "Darwin" else 8
+        self.os_dropdown.grid(row=2, column=0, pady=dropdown_pady)
         self.os_dropdown.bind('<<ComboboxSelected>>', self.on_os_select)
 
         # Create a divider for visual separation
         self.divider = ttk.Separator(self.main_frame, orient='horizontal')
-        self.divider.grid(row=1, column=0, sticky="ew", pady=15)
+        divider_pady = 15 if self.current_os == "Darwin" else 12
+        self.divider.grid(row=1, column=0, sticky="ew", pady=divider_pady)
 
-        # Frame for buttons
-        self.button_frame = ttk.Frame(self.main_frame, padding="8")
-        self.button_frame.grid(row=2, column=0, pady=10)
+        # Frame for buttons with platform-specific padding
+        button_frame_padding = "8" if self.current_os == "Darwin" else "6"
+        self.button_frame = ttk.Frame(self.main_frame, padding=button_frame_padding)
+        button_frame_pady = 10 if self.current_os == "Darwin" else 8
+        self.button_frame.grid(row=2, column=0, pady=button_frame_pady)
         self.button_frame.grid_columnconfigure(0, weight=1)
 
-        # Button container
-        self.button_container = ttk.Frame(self.button_frame, relief="groove", borderwidth=2)
-        self.button_container.grid(row=0, column=0, padx=15)
+        # Button container with platform-specific settings
+        border_width = 2 if self.current_os == "Darwin" else 1
+        self.button_container = ttk.Frame(self.button_frame, relief="groove", borderwidth=border_width)
+        container_padx = 15 if self.current_os == "Darwin" else 12
+        self.button_container.grid(row=0, column=0, padx=container_padx)
         self.button_container.grid_columnconfigure(0, weight=1)
 
         # Store buttons in a list for easy access
@@ -147,8 +179,8 @@ class TestingApp:
 
         # Bind number keys 1-8 for direct selection
         for i in range(1, 9):
-            self.root.bind(str(i), lambda event, idx=i-1: self.button_click(idx))
-            self.root.bind(f'<KP_{i}>', lambda event, idx=i-1: self.button_click(idx))
+            self.root.bind(str(i), lambda event, idx=i - 1: self.button_click(idx))
+            self.root.bind(f'<KP_{i}>', lambda event, idx=i - 1: self.button_click(idx))
 
     def on_os_select(self, event):
         # Clear existing buttons
@@ -173,8 +205,10 @@ class TestingApp:
             btn.bind('<FocusIn>', lambda e, i=i: self.on_focus_in(i))
             btn.bind('<FocusOut>', self.on_focus_out)
 
-            # Medium spacing between buttons
-            btn.grid(row=i, column=0, pady=8, padx=20, sticky="ew")
+            # Platform-specific button spacing
+            btn_pady = 8 if self.current_os == "Darwin" else 5
+            btn_padx = 20 if self.current_os == "Darwin" else 15
+            btn.grid(row=i, column=0, pady=btn_pady, padx=btn_padx, sticky="ew")
             self.buttons.append(btn)
 
         # Set focus to the first button by default
@@ -250,7 +284,7 @@ class TestingApp:
         if current_os == "Windows":
             if button_num == 0:  # AI Hardware Scanning for Windows
                 print("Starting Windows AI Hardware Scan...")
-                Windows_Hardware_AI_Scan.create_windows_diagnostic_app()
+                Windows_Hardware_AI_Scan.windows_hardware_scan(self.root)
 
 
             elif button_num == 1:  # AI Software Scanning for Windows
