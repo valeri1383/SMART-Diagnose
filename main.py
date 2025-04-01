@@ -363,6 +363,10 @@ class TestingApp:
 # Add proper exit handler for the main window
 def on_exit():
     print("Exiting application...")
+    # Cancel all scheduled after events
+    for after_id in root.tk.call('after', 'info'):
+        root.after_cancel(after_id)
+    # Now it's safe to quit and destroy
     root.quit()
     root.destroy()
     # Force exit if the application is still running

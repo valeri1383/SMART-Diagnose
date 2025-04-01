@@ -71,7 +71,7 @@ class TestResultsDashboard:
 
         self.time_filter = ttk.Combobox(filter_frame, width=15, state="readonly",
                                         values=["Last 24 Hours", "Last 7 Days", "Last 30 Days", "All Time"])
-        self.time_filter.current(1)  # Default to Last 7 Days
+        self.time_filter.current(3)  # Default to All time
         self.time_filter.pack(side=tk.LEFT)
         self.time_filter.bind("<<ComboboxSelected>>", lambda e: self.refresh_data())
 
@@ -247,15 +247,13 @@ class TestResultsDashboard:
                 print(f"Using existing Firebase app: {app.name}")
             except ValueError:
                 # Not initialized yet, use credentials
-                # SECURITY IMPROVEMENT: Use environment variables or a config file for credentials
-                # instead of hardcoding them in the source code
                 try:
                     # Try to load from environment variable
                     cred_path = os.environ.get('FIREBASE_CREDENTIALS_PATH')
                     if cred_path and os.path.exists(cred_path):
                         cred = credentials.Certificate(cred_path)
                     else:
-                        # Fall back to the original credentials (in production, this should be replaced)
+                        # Fall back to the original credentials
                         cred = credentials.Certificate({
                             "type": "service_account",
                             "project_id": "diagnostic-app-e1587",
@@ -291,6 +289,29 @@ class TestResultsDashboard:
             # Show empty charts with "No data" message
             self.show_empty_charts()
 
+    def show_empty_charts(self):
+        """Display empty charts with 'No data' message"""
+        # Update KPIs with zeros
+        self.update_kpi_values(0, 0.0, 0.0, 0.0)
+
+        # Clear and show "No data" in all chart frames
+        for frame, title in [
+            (self.type_chart_frame, "Tests by Type"),
+            (self.status_chart_frame, "Test Status"),
+            (self.time_chart_frame, "Tests Over Time"),
+            (self.metrics_chart_frame, "Performance Metrics")
+        ]:
+            # Clear the frame
+            for widget in frame.winfo_children():
+                widget.destroy()
+
+            # Add "No data" label
+            no_data_label = ttk.Label(frame, text="No data available", font=("Arial", 14))
+            no_data_label.pack(expand=True, pady=40)
+
+        # Update status
+        self.status_var.set("No data available for the selected time range")
+
     def _fetch_firebase_data(self, time_filter):
         """Fetch data from Firebase in a background thread"""
         try:
@@ -308,37 +329,76 @@ class TestResultsDashboard:
             else:  # All Time
                 start_date = datetime.now() - timedelta(days=365 * 10)  # Very far back
 
-            start_date_str = start_date.strftime("%Y-%m-%d %H:%M:%S")
+            # Retrieve all documents to work with directly
+            print(f"Retrieving test results for {time_filter}...")
+            all_docs = list(results_ref.stream())
 
-            # Query Firestore
-            print(f"Querying Firestore for data since {start_date_str}")
-            query = results_ref.where("timestamp", ">=", start_date_str).order_by("timestamp")
-            docs = query.stream()
+            if not all_docs:
+                self.root.after(0, lambda: self.status_var.set("No data found in Firestore"))
+                self.root.after(0, self.show_empty_charts)
+                return
 
-            # Convert to list
-            results = []
-            for doc in docs:
+            # Convert all documents to dictionaries with ID
+            all_results = []
+            for doc in all_docs:
                 data = doc.to_dict()
                 data['id'] = doc.id
-                results.append(data)
+                all_results.append(data)
 
-            print(f"Fetched {len(results)} records from Firestore")
+            # Create a dataframe with all results
+            df_all = pd.DataFrame(all_results)
 
-            # If we have results, update the UI
-            if results:
-                # Create pandas DataFrame
-                df = pd.DataFrame(results)
+            # Filter based on timestamp in Python rather than in Firestore query
+            if 'timestamp' in df_all.columns:
+                # Convert timestamps to datetime objects for comparison
+                # Handle both string timestamps and firestore timestamps
+                def convert_timestamp(ts):
+                    if isinstance(ts, str):
+                        try:
+                            return pd.to_datetime(ts)
+                        except:
+                            return None
+                    elif hasattr(ts, 'timestamp'):  # Firestore timestamp object
+                        try:
+                            return datetime.fromtimestamp(ts.timestamp())
+                        except:
+                            return None
+                    return None
 
-                # Parse timestamps
-                if 'timestamp' in df.columns:
-                    df['timestamp'] = pd.to_datetime(df['timestamp'])
-                    df['date'] = df['timestamp'].dt.date
+                # Convert timestamps
+                df_all['timestamp_dt'] = df_all['timestamp'].apply(convert_timestamp)
 
-                # Update UI from main thread
-                self.root.after(0, lambda: self._update_ui_with_data(df))
+                # Drop rows with invalid timestamps
+                df_all = df_all.dropna(subset=['timestamp_dt'])
+
+                # Filter based on the calculated start date
+                mask = df_all['timestamp_dt'] >= start_date
+                df_filtered = df_all[mask].copy()  # Create a copy to avoid SettingWithCopyWarning
+
+                # Add date column from timestamp
+                df_filtered['date'] = df_filtered['timestamp_dt'].dt.date
+
+                # If we have results after filtering, use them
+                if not df_filtered.empty:
+                    # Update UI from main thread
+                    self.root.after(0, lambda: self._update_ui_with_data(df_filtered))
+                    self.root.after(0, lambda: self.status_var.set(
+                        f"Showing data for {time_filter}. Found {len(df_filtered)} records."
+                    ))
+                    return
+                else:
+                    self.root.after(0, lambda: self.status_var.set(f"No data found for {time_filter}"))
+                    self.root.after(0, self.show_empty_charts)
+                    return
+
+            # If we reach here, there's an issue with timestamps
+            self.root.after(0, lambda: self.status_var.set("Could not filter by date: timestamp format issue"))
+
+            # Fall back to showing all data
+            if not df_all.empty:
+                self.root.after(0, lambda: self._update_ui_with_data(df_all))
+                self.root.after(0, lambda: self.status_var.set("Showing all data (date filtering unavailable)"))
             else:
-                self.root.after(0,
-                                lambda: self.status_var.set("No data found in Firestore for the selected time range"))
                 self.root.after(0, self.show_empty_charts)
 
         except Exception as e:
@@ -347,23 +407,9 @@ class TestResultsDashboard:
             traceback.print_exc()
             self.root.after(0, self.show_empty_charts)
 
-    def show_empty_charts(self):
-        """Show empty charts with 'No data' message"""
-        # Update KPIs to zeros
-        self.update_kpi_values(0, 0, 0, 0)
-
-        # Clear chart frames and show "No data" message
-        for frame in [self.type_chart_frame, self.status_chart_frame,
-                      self.time_chart_frame, self.metrics_chart_frame]:
-            for widget in frame.winfo_children():
-                widget.destroy()
-            ttk.Label(frame, text="No data available", font=("Arial", 14)).pack(expand=True, pady=40)
-
     def _update_ui_with_data(self, df):
         """Update UI with the fetched data"""
         try:
-            print("Updating UI with fetched data")
-
             # Calculate KPI values
             total_tests = len(df)
 
@@ -383,8 +429,8 @@ class TestResultsDashboard:
                             end = datetime.strptime(row['details']['end_time'], "%Y-%m-%d %H:%M:%S")
                             duration = (end - start).total_seconds()
                             test_times.append(duration)
-                        except Exception as e:
-                            print(f"Error parsing test time: {e}")
+                        except Exception:
+                            pass
 
             avg_time = sum(test_times) / len(test_times) if test_times else 0
 
@@ -392,105 +438,106 @@ class TestResultsDashboard:
             self.update_kpi_values(total_tests, success_rate, failure_rate, avg_time)
 
             # Update charts with real data
+            try:
+                # 1. Test Types Chart
+                if 'test_type' in df.columns:
+                    type_counts = df['test_type'].value_counts()
+                    self.create_pie_chart(
+                        self.type_chart_frame,
+                        type_counts.index,
+                        type_counts.values,
+                        "Test Distribution by Type"
+                    )
+                else:
+                    for widget in self.type_chart_frame.winfo_children():
+                        widget.destroy()
+                    ttk.Label(self.type_chart_frame, text="No test type data available").pack(pady=40)
 
-            # 1. Test Types Chart
-            if 'test_type' in df.columns:
-                type_counts = df['test_type'].value_counts()
-                self.create_pie_chart(
-                    self.type_chart_frame,
-                    type_counts.index,
-                    type_counts.values,
-                    "Test Distribution by Type"
+                # 2. Status Chart
+                if 'status' in df.columns:
+                    status_counts = df['status'].value_counts()
+                    colors = {'Passed': 'green', 'Failed': 'red', 'Warning': 'orange', 'Running': 'blue'}
+                    status_colors = [colors.get(status, 'gray') for status in status_counts.index]
+
+                    self.create_pie_chart(
+                        self.status_chart_frame,
+                        status_counts.index,
+                        status_counts.values,
+                        "Test Results Distribution",
+                        colors=status_colors
+                    )
+                else:
+                    for widget in self.status_chart_frame.winfo_children():
+                        widget.destroy()
+                    ttk.Label(self.status_chart_frame, text="No status data available").pack(pady=40)
+
+                # 3. Time Chart
+                if 'date' in df.columns:
+                    daily_counts = df.groupby('date').size()
+                    self.create_time_chart(
+                        self.time_chart_frame,
+                        daily_counts.index,
+                        daily_counts.values
+                    )
+                else:
+                    for widget in self.time_chart_frame.winfo_children():
+                        widget.destroy()
+                    ttk.Label(self.time_chart_frame, text="No date data available").pack(pady=40)
+
+                # 4. Metrics Chart
+                cpu_usage = []
+                memory_usage = []
+                disk_usage = []
+
+                for _, row in df.iterrows():
+                    if 'details' in row and isinstance(row['details'], dict):
+                        details = row['details']
+
+                        # Handle None values or missing keys for CPU usage
+                        if 'cpu_usage' in details and details['cpu_usage'] is not None:
+                            try:
+                                cpu_usage.append(float(details['cpu_usage']))
+                            except (ValueError, TypeError):
+                                pass
+
+                        # Handle None values or missing keys for memory usage
+                        if 'memory_usage' in details and details['memory_usage'] is not None:
+                            try:
+                                memory_usage.append(float(details['memory_usage']))
+                            except (ValueError, TypeError):
+                                pass
+
+                        # Handle None values or missing keys for disk usage
+                        if 'disk_usage' in details and details['disk_usage'] is not None:
+                            try:
+                                disk_usage.append(float(details['disk_usage']))
+                            except (ValueError, TypeError):
+                                pass
+
+                if cpu_usage or memory_usage or disk_usage:
+                    avg_cpu = sum(cpu_usage) / len(cpu_usage) if cpu_usage else 0
+                    avg_memory = sum(memory_usage) / len(memory_usage) if memory_usage else 0
+                    avg_disk = sum(disk_usage) / len(disk_usage) if disk_usage else 0
+
+                    self.create_metrics_chart(
+                        self.metrics_chart_frame,
+                        ['CPU Usage', 'Memory Usage', 'Disk Usage'],
+                        [avg_cpu, avg_memory, avg_disk]
+                    )
+                else:
+                    for widget in self.metrics_chart_frame.winfo_children():
+                        widget.destroy()
+                    ttk.Label(self.metrics_chart_frame, text="No performance metrics available").pack(pady=40)
+
+                # Update status
+                self.status_var.set(
+                    f"Data updated successfully. {total_tests} records found. Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
                 )
-            else:
-                # Show empty chart with message
-                for widget in self.type_chart_frame.winfo_children():
-                    widget.destroy()
-                ttk.Label(self.type_chart_frame, text="No test type data available").pack(pady=40)
 
-            # 2. Status Chart
-            if 'status' in df.columns:
-                status_counts = df['status'].value_counts()
-                colors = {'Passed': 'green', 'Failed': 'red', 'Warning': 'orange', 'Running': 'blue'}
-                status_colors = [colors.get(status, 'gray') for status in status_counts.index]
-
-                self.create_pie_chart(
-                    self.status_chart_frame,
-                    status_counts.index,
-                    status_counts.values,
-                    "Test Results Distribution",
-                    colors=status_colors
-                )
-            else:
-                # Show empty chart with message
-                for widget in self.status_chart_frame.winfo_children():
-                    widget.destroy()
-                ttk.Label(self.status_chart_frame, text="No status data available").pack(pady=40)
-
-            # 3. Time Chart
-            if 'date' in df.columns:
-                daily_counts = df.groupby('date').size()
-                self.create_time_chart(
-                    self.time_chart_frame,
-                    daily_counts.index,
-                    daily_counts.values
-                )
-            else:
-                # Show empty chart with message
-                for widget in self.time_chart_frame.winfo_children():
-                    widget.destroy()
-                ttk.Label(self.time_chart_frame, text="No date data available").pack(pady=40)
-
-            # 4. Metrics Chart
-            cpu_usage = []
-            memory_usage = []
-            disk_usage = []
-
-            for _, row in df.iterrows():
-                if 'details' in row and isinstance(row['details'], dict):
-                    details = row['details']
-
-                    # Handle None values or missing keys for CPU usage
-                    if 'cpu_usage' in details and details['cpu_usage'] is not None:
-                        try:
-                            cpu_usage.append(float(details['cpu_usage']))
-                        except (ValueError, TypeError):
-                            print(f"Invalid CPU usage value: {details['cpu_usage']}")
-
-                    # Handle None values or missing keys for memory usage
-                    if 'memory_usage' in details and details['memory_usage'] is not None:
-                        try:
-                            memory_usage.append(float(details['memory_usage']))
-                        except (ValueError, TypeError):
-                            print(f"Invalid memory usage value: {details['memory_usage']}")
-
-                    # Handle None values or missing keys for disk usage
-                    if 'disk_usage' in details and details['disk_usage'] is not None:
-                        try:
-                            disk_usage.append(float(details['disk_usage']))
-                        except (ValueError, TypeError):
-                            print(f"Invalid disk usage value: {details['disk_usage']}")
-
-            if cpu_usage or memory_usage or disk_usage:
-                avg_cpu = sum(cpu_usage) / len(cpu_usage) if cpu_usage else 0
-                avg_memory = sum(memory_usage) / len(memory_usage) if memory_usage else 0
-                avg_disk = sum(disk_usage) / len(disk_usage) if disk_usage else 0
-
-                self.create_metrics_chart(
-                    self.metrics_chart_frame,
-                    ['CPU Usage', 'Memory Usage', 'Disk Usage'],
-                    [avg_cpu, avg_memory, avg_disk]
-                )
-            else:
-                # Show empty chart with message
-                for widget in self.metrics_chart_frame.winfo_children():
-                    widget.destroy()
-                ttk.Label(self.metrics_chart_frame, text="No performance metrics available").pack(pady=40)
-
-            # Update status
-            self.status_var.set(
-                f"Data updated successfully. {total_tests} records found. Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            )
+            except Exception as chart_error:
+                print(f"Error creating charts: {str(chart_error)}")
+                traceback.print_exc()
+                self.status_var.set(f"Error creating visualizations: {str(chart_error)}")
 
         except Exception as e:
             self.status_var.set(f"Error updating UI: {str(e)}")
