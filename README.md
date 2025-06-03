@@ -35,24 +35,21 @@ An AI-powered system analysis and diagnostic tool for Windows and macOS.
 3. **Available Features**
    - 🤖 AI Hardware Scanning
    - 🤖 AI Software Scanning  
-   - 🔍 AI System Optimizer
+   - 🔍 AI System Optimiser
    - ⚡ AI Security Scanner
    - 📱 AI App Recommender
    - 💬 Chat with AI Agent
-   - 📊 Dashboard Visualization
+   - 📊 Dashboard Visualisation
 
 ## Navigation
 
 - **Keyboard Shortcuts**: Use number keys (1-8) or arrow keys + Enter
 - **Mouse**: Click any button to launch features
-- **Exit**: Press button 8 or close window
+- **Exit**: Press button 8 or close the window
 
 ## Requirements
 
 - Python 3.7+
 - Internet connection (for AI features)
-- Administrator privileges (recommended for full diagnostics)
 
-## Support
 
-For issues or questions, refer to the project documentation or contact support.
